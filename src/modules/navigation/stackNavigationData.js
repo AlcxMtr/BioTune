@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Image } from 'react-native';
 
 import TabNavigator from './MainTabNavigator';
+import ScanMedicationScreen from '../medication/ScanViewContainer';
 import ProfileScreen from '../profile/ProfileViewContainer';
 import GalleryScreen from '../gallery/GalleryViewContainer';
 import ArticleScreen from '../article/ArticleViewContainer';
@@ -459,6 +460,11 @@ const StackNavigationData = [
       color: colors.white,
       fontSize: 18,
     },
+  },
+  {
+    name: 'ScanMedication',
+    component: ScanMedicationScreen,
+    headerShown: false,
   },
 ]
 

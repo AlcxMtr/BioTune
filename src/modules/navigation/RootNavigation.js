@@ -13,15 +13,19 @@ export default function NavigatorView(props) {
       {StackNavigationData.map((item, idx) => (
         <Stack.Screen
           key={`stack_item-${idx+1}`}
-          name={item.name} 
-          component={item.component} 
-          options={{
-            headerLeft: item.headerLeft,
-            headerBackground: () => (
-              <Image style={styles.headerImage} source={item.headerBackground.source} />
-            ),
-            headerTitleStyle: item.headerTitleStyle,
-          }} 
+          name={item.name}
+          component={item.component}
+          options={
+            item.headerShown === false
+              ? { headerShown: false }
+              : {
+                  headerLeft: item.headerLeft,
+                  headerBackground: () => (
+                    <Image style={styles.headerImage} source={item.headerBackground.source} />
+                  ),
+                  headerTitleStyle: item.headerTitleStyle,
+                }
+          }
         />
       ))}
     </Stack.Navigator>
