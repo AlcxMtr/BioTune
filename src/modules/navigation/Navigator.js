@@ -5,7 +5,9 @@ import {
   DrawerItem,
   DrawerContentScrollView,
 } from "@react-navigation/drawer";
+import { connect } from "react-redux";
 import NavigatorView from "./RootNavigation";
+import AuthViewContainer from "../auth/AuthViewContainer";
 
 import { colors } from "../../styles";
 
@@ -95,7 +97,11 @@ function CustomDrawerContent(props) {
   );
 }
 
-export default function App() {
+function App({ isLoggedIn }) {
+  if (!isLoggedIn) {
+    return <AuthViewContainer />;
+  }
+
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
@@ -108,6 +114,12 @@ export default function App() {
     </Drawer.Navigator>
   );
 }
+
+const mapStateToProps = (state) => ({
+  isLoggedIn: state.app.isLoggedIn,
+});
+
+export default connect(mapStateToProps)(App);
 
 const styles = StyleSheet.create({
   menuTitle: {

@@ -139,7 +139,7 @@ export default class AuthScreen extends React.Component {
                     ? 'Login'
                     : 'Register'
                 }
-                onPress={() => this.props.navigation.goBack()}
+                onPress={() => this.props.onLogin()}
               />
 
               {!this.state.isKeyboardVisible && (
@@ -149,21 +149,21 @@ export default class AuthScreen extends React.Component {
                     bordered
                     rounded
                     icon={require('../../../assets/images/google-plus.png')}
-                    onPress={() => this.props.navigation.goBack()}
+                    onPress={() => this.props.onLogin()}
                   />
                   <Button
                     style={[styles.socialButton, styles.socialButtonCenter]}
                     bordered
                     rounded
                     icon={require('../../../assets/images/twitter.png')}
-                    onPress={() => this.props.navigation.goBack()}
+                    onPress={() => this.props.onLogin()}
                   />
                   <Button
                     style={styles.socialButton}
                     bordered
                     rounded
                     icon={require('../../../assets/images/facebook.png')}
-                    onPress={() => this.props.navigation.goBack()}
+                    onPress={() => this.props.onLogin()}
                   />
                 </View>
               )}
