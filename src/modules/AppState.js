@@ -2,6 +2,7 @@
 type AppStateType = {
   isFirstOpen: boolean,
   isLoggedIn: boolean,
+  accountType: string | null,
 };
 
 type ActionType = {
@@ -12,10 +13,12 @@ type ActionType = {
 export const initialState: AppStateType = {
   isFirstOpen: true,
   isLoggedIn: false,
+  accountType: null,
 };
 
 export const SET_FIRST_OPEN = 'AppState/SET_FIRST_OPEN';
 export const SET_LOGGED_IN = 'AppState/SET_LOGGED_IN';
+export const SET_ACCOUNT_TYPE = 'AppState/SET_ACCOUNT_TYPE';
 
 export function setAppOpened(): ActionType {
   return {
@@ -26,6 +29,13 @@ export function setAppOpened(): ActionType {
 export function setLoggedIn(): ActionType {
   return {
     type: SET_LOGGED_IN,
+  };
+}
+
+export function setAccountType(accountType: string): ActionType {
+  return {
+    type: SET_ACCOUNT_TYPE,
+    payload: accountType,
   };
 }
 
@@ -43,6 +53,11 @@ export default function AppStateReducer(
       return {
         ...state,
         isLoggedIn: true,
+      };
+    case SET_ACCOUNT_TYPE:
+      return {
+        ...state,
+        accountType: action.payload,
       };
     default:
       return state;

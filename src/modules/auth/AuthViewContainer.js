@@ -1,12 +1,24 @@
 // @flow
-import { compose } from 'recompose';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
-import { setLoggedIn } from '../AppState';
-
+import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
+import { setLoggedIn, setAccountType } from '../AppState';
 import AuthView from './AuthView';
+
+function AuthViewContainerWrapper({ onLogin, onSetAccountType }) {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
+      if (user) onLogin();
+    });
+    return unsubscribe;
+  }, []);
+
+  return <AuthView onLogin={onLogin} onSetAccountType={onSetAccountType} />;
+}
 
 const mapDispatchToProps = (dispatch) => ({
   onLogin: () => dispatch(setLoggedIn()),
+  onSetAccountType: (type) => dispatch(setAccountType(type)),
 });
 
-export default compose(connect(null, mapDispatchToProps))(AuthView);
+export default connect(null, mapDispatchToProps)(AuthViewContainerWrapper);

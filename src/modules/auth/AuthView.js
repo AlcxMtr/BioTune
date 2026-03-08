@@ -1,262 +1,270 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   Animated,
-  Keyboard,
-  Platform,
-  LayoutAnimation,
+  Dimensions,
   TouchableOpacity,
   ImageBackground,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
-
-
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '@react-native-firebase/auth';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 import { fonts, colors } from '../../styles';
 import { TextInput, Button } from '../../components';
 
-const FORM_STATES = {
-  LOGIN: 0,
-  REGISTER: 1,
-};
+const { width } = Dimensions.get('window');
+const ROLES = ['Patient', 'Caregiver', 'Doctor'];
 
-export default class AuthScreen extends React.Component {
-  state = {
-    anim: new Animated.Value(0),
+export default function AuthView({ onLogin, onSetAccountType }) {
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [formState, setFormState] = useState('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    // Current visible form
-    formState: FORM_STATES.LOGIN,
-    isKeyboardVisible: false,
+  const goBack = () => {
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      bounciness: 4,
+    }).start();
   };
 
-  componentDidMount() {
-    this.keyboardDidShowListener = Keyboard.addListener(
-      Platform.select({ android: 'keyboardDidShow', ios: 'keyboardWillShow' }),
-      this._keyboardDidShow.bind(this),
-    );
-    this.keyboardDidHideListener = Keyboard.addListener(
-      Platform.select({ android: 'keyboardDidHide', ios: 'keyboardWillHide' }),
-      this._keyboardDidHide.bind(this),
-    );
+  const selectRole = (role) => {
+    onSetAccountType(role.toLowerCase());
+    Animated.spring(slideAnim, {
+      toValue: -width,
+      useNativeDriver: true,
+      bounciness: 4,
+    }).start();
+  };
 
-    Animated.timing(this.state.anim, { toValue: 3000, duration: 3000 }).start();
-  }
+  const handleAuth = async () => {
+    if (!email || !password) {
+      setError('Please enter your email and password.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const auth = getAuth();
+      if (formState === 'login') {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+      onLogin();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  componentWillUnmount() {
-    this.keyboardDidShowListener.remove();
-    this.keyboardDidHideListener.remove();
-  }
-
-  _keyboardDidShow() {
-    LayoutAnimation.easeInEaseOut();
-    this.setState({ isKeyboardVisible: true });
-  }
-
-  _keyboardDidHide() {
-    LayoutAnimation.easeInEaseOut();
-    this.setState({ isKeyboardVisible: false });
-  }
-
-  fadeIn(delay, from = 0) {
-    const { anim } = this.state;
-    return {
-      opacity: anim.interpolate({
-        inputRange: [delay, Math.min(delay + 500, 3000)],
-        outputRange: [0, 1],
-        extrapolate: 'clamp',
-      }),
-      transform: [
-        {
-          translateY: anim.interpolate({
-            inputRange: [delay, Math.min(delay + 500, 3000)],
-            outputRange: [from, 0],
-            extrapolate: 'clamp',
-          }),
-        },
-      ],
-    };
-  }
-
-  render() {
-    const isRegister = this.state.formState === FORM_STATES.REGISTER;
-
-    return (
-      <ImageBackground
-        source={require('../../../assets/images/background.png')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
+  return (
+    <ImageBackground
+      source={require('../../../assets/images/background.png')}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.container}>
-          <View style={[styles.section, { paddingTop: 30 }]}>
-            <Animated.Image
-              resizeMode="contain"
-              style={[
-                styles.logo,
-                this.state.isKeyboardVisible && { height: 90 },
-                this.fadeIn(0),
-              ]}
-              source={require('../../../assets/images/white-logo.png')}
-            />
-          </View>
+        {/* Logo – always visible */}
+        <View style={styles.logoContainer}>
+          <Animated.Image
+            resizeMode="contain"
+            style={styles.logo}
+            source={require('../../../assets/images/white-logo.png')}
+          />
+        </View>
 
+        {/* Sliding card area */}
+        <View style={styles.cardOuter}>
           <Animated.View
-            style={[styles.section, styles.middle, this.fadeIn(700, -20)]}
+            style={[styles.cardSlider, { transform: [{ translateX: slideAnim }] }]}
           >
-            <TextInput
-              placeholder="Username"
-              style={styles.textInput}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            {/* Panel 1 – Role selection */}
+            <View style={styles.panel}>
+              <Text style={styles.heading}>I am a…</Text>
+              {ROLES.map((role) => (
+                <TouchableOpacity
+                  key={role}
+                  style={styles.roleButton}
+                  onPress={() => selectRole(role)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.roleButtonText}>{role}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-            {this.state.formState === FORM_STATES.REGISTER && (
+            {/* Panel 2 – Email + password */}
+            <ScrollView
+              style={styles.panel}
+              contentContainerStyle={styles.formScroll}
+              keyboardShouldPersistTaps="handled"
+            >
+              <TouchableOpacity onPress={goBack} style={styles.backButton}>
+                <Icon name="arrow-left" size={18} color={colors.white} />
+              </TouchableOpacity>
+              <Text style={styles.heading}>
+                {formState === 'login' ? 'Sign In' : 'Create Account'}
+              </Text>
+
               <TextInput
                 placeholder="Email"
                 style={styles.textInput}
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
               />
-            )}
+              <TextInput
+                placeholder="Password"
+                secureTextEntry
+                style={styles.textInput}
+                value={password}
+                onChangeText={setPassword}
+              />
 
-            <TextInput
-              placeholder="Password"
-              secureTextEntry
-              style={styles.textInput}
-            />
+              {!!error && <Text style={styles.error}>{error}</Text>}
 
-            <Animated.View
-              style={[styles.section, styles.bottom, this.fadeIn(700, -20)]}
-            >
               <Button
                 bgColor="white"
                 textColor={colors.primary}
                 secondary
                 rounded
-                style={{ alignSelf: 'stretch', marginBottom: 10, height: 50 }}
-                caption={
-                  this.state.formState === FORM_STATES.LOGIN
-                    ? 'Login'
-                    : 'Register'
-                }
-                onPress={() => this.props.onLogin()}
+                style={styles.authButton}
+                caption={loading ? 'Please wait…' : formState === 'login' ? 'Sign In' : 'Register'}
+                onPress={handleAuth}
               />
 
-              {!this.state.isKeyboardVisible && (
-                <View style={styles.socialLoginContainer}>
-                  <Button
-                    style={styles.socialButton}
-                    bordered
-                    rounded
-                    icon={require('../../../assets/images/google-plus.png')}
-                    onPress={() => this.props.onLogin()}
-                  />
-                  <Button
-                    style={[styles.socialButton, styles.socialButtonCenter]}
-                    bordered
-                    rounded
-                    icon={require('../../../assets/images/twitter.png')}
-                    onPress={() => this.props.onLogin()}
-                  />
-                  <Button
-                    style={styles.socialButton}
-                    bordered
-                    rounded
-                    icon={require('../../../assets/images/facebook.png')}
-                    onPress={() => this.props.onLogin()}
-                  />
-                </View>
-              )}
-
-              {!this.state.isKeyboardVisible && (
-                <TouchableOpacity
-                  onPress={() => {
-                    LayoutAnimation.spring();
-                    this.setState({
-                      formState: isRegister
-                        ? FORM_STATES.LOGIN
-                        : FORM_STATES.REGISTER,
-                    });
-                  }}
-                  style={{ paddingTop: 30, flexDirection: 'row' }}
-                >
-                  <Text
-                    style={{
-                      color: colors.white,
-                      fontFamily: fonts.primaryRegular,
-                    }}
-                  >
-                    {isRegister
-                      ? 'Already have an account?'
-                      : "Don't have an account?"}
-                  </Text>
-                  <Text
-                    style={{
-                      color: colors.white,
-                      fontFamily: fonts.primaryBold,
-                      marginLeft: 5,
-                    }}
-                  >
-                    {isRegister ? 'Login' : 'Register'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </Animated.View>
+              <TouchableOpacity
+                onPress={() =>
+                  setFormState(formState === 'login' ? 'register' : 'login')
+                }
+                style={styles.toggleRow}
+              >
+                <Text style={styles.toggleText}>
+                  {formState === 'login'
+                    ? "Don't have an account?"
+                    : 'Already have an account?'}
+                </Text>
+                <Text style={[styles.toggleText, styles.toggleBold]}>
+                  {formState === 'login' ? 'Register' : 'Sign In'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
           </Animated.View>
         </View>
-      </ImageBackground>
-    );
-  }
+      </KeyboardAvoidingView>
+    </ImageBackground>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 30,
-  },
   backgroundImage: {
     flex: 1,
   },
-  section: {
+  screen: {
     flex: 1,
     alignItems: 'center',
+  },
+  logoContainer: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
     justifyContent: 'center',
+    maxHeight: 180,
+    paddingTop: 40,
   },
-  middle: {
+  logo: {
+    height: 120,
+    width: 200,
+  },
+  // Clipping wrapper — only the card area slides
+  cardOuter: {
     flex: 2,
-    justifyContent: 'flex-start',
     alignSelf: 'stretch',
+    overflow: 'hidden',
   },
-  bottom: {
+  cardSlider: {
     flex: 1,
-    alignSelf: 'stretch',
-    paddingBottom: Platform.OS === 'android' ? 30 : 0,
+    flexDirection: 'row',
+    width: width * 2,
   },
-  last: {
-    justifyContent: 'flex-end',
+  panel: {
+    width: width,
+    flex: 1,
+    paddingHorizontal: 30,
+  },
+  formScroll: {
+    flexGrow: 1,
+    paddingBottom: 30,
+    paddingTop: 10,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    padding: 8,
+    marginBottom: 8,
+  },
+  heading: {
+    fontSize: 24,
+    fontFamily: fonts.primaryBold,
+    color: colors.white,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  roleButton: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1.5,
+    borderColor: colors.white,
+    borderRadius: 30,
+    paddingVertical: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  roleButtonText: {
+    color: colors.white,
+    fontSize: 17,
+    fontFamily: fonts.primaryBold,
+    letterSpacing: 0.5,
   },
   textInput: {
     alignSelf: 'stretch',
-    marginTop: 20,
-    width: 350
+    marginTop: 16,
   },
-  logo: {
-    height: 150,
-  },
-  socialLoginContainer: {
-    flexDirection: 'row',
+  authButton: {
     alignSelf: 'stretch',
-    marginTop: 15,
-    justifyContent: 'space-between',
-    height: 40
+    marginTop: 24,
+    height: 50,
   },
-  socialButton: {
-    flex: 1,
+  error: {
+    color: '#FF6B6B',
+    marginTop: 12,
+    fontFamily: fonts.primaryRegular,
+    textAlign: 'center',
   },
-  socialButtonCenter: {
-    marginLeft: 10,
-    marginRight: 10,
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  toggleText: {
+    color: colors.white,
+    fontFamily: fonts.primaryRegular,
+    fontSize: 14,
+  },
+  toggleBold: {
+    fontFamily: fonts.primaryBold,
+    marginLeft: 5,
   },
 });
+
