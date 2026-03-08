@@ -16,12 +16,21 @@ const settingsItems = [
   { label: 'Delete Account' },
 ];
 
-export default function SettingsView() {
+export default function SettingsView({ onSignOut }) {
+  const handlePress = (label) => {
+    if (label === 'Sign Out') {
+      onSignOut();
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       {settingsItems.map((item, idx) => (
-        <TouchableOpacity key={idx} style={styles.row}>
-          <Text style={styles.label}>{item.label}</Text>
+        <TouchableOpacity key={idx} style={styles.row} onPress={() => handlePress(item.label)}>
+          <Text style={[
+            styles.label,
+            (item.label === 'Sign Out' || item.label === 'Delete Account') && styles.destructiveLabel,
+          ]}>{item.label}</Text>
         </TouchableOpacity>
       ))}
     </ScrollView>
@@ -42,5 +51,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     color: colors.darkGray,
+  },
+  destructiveLabel: {
+    color: '#E53935',
   },
 });

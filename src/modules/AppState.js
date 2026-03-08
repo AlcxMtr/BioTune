@@ -18,6 +18,7 @@ export const initialState: AppStateType = {
 
 export const SET_FIRST_OPEN = 'AppState/SET_FIRST_OPEN';
 export const SET_LOGGED_IN = 'AppState/SET_LOGGED_IN';
+export const SET_LOGGED_OUT = 'AppState/SET_LOGGED_OUT';
 export const SET_ACCOUNT_TYPE = 'AppState/SET_ACCOUNT_TYPE';
 
 export function setAppOpened(): ActionType {
@@ -29,6 +30,12 @@ export function setAppOpened(): ActionType {
 export function setLoggedIn(): ActionType {
   return {
     type: SET_LOGGED_IN,
+  };
+}
+
+export function setLoggedOut(): ActionType {
+  return {
+    type: SET_LOGGED_OUT,
   };
 }
 
@@ -53,6 +60,12 @@ export default function AppStateReducer(
       return {
         ...state,
         isLoggedIn: true,
+      };
+    case SET_LOGGED_OUT:
+      return {
+        ...state,
+        isLoggedIn: false,
+        accountType: null,
       };
     case SET_ACCOUNT_TYPE:
       return {

@@ -8,33 +8,60 @@
  */
 
 import {setGlobalOptions} from "firebase-functions";
-import { user } from "firebase-functions/v1/auth";
-import { onCall } from "firebase-functions/v2/https";
+import {user} from "firebase-functions/v1/auth";
+import {getFirestore, Timestamp} from "firebase-admin/firestore";
+import {initializeApp} from "firebase-admin/app";
 
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import {onRequest} from "firebase-functions/https";
-import * as logger from "firebase-functions/logger";
+initializeApp();
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+setGlobalOptions({maxInstances: 10});
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+export const onUserCreated = user().onCreate(async (userRecord) => {
+  const db = getFirestore();
+  const uid = userRecord.uid;
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+  const userRef = db.collection("users").doc(uid);
 
-export const onUserCreated = user().onCreate((userRecord) => {
-  console.log("Created:", userRecord.uid);
+  // Create the user document
+  await userRef.set({
+    uid,
+    email: userRecord.email ?? null,
+    accountType: null,
+    caregivers: [],
+    createdAt: Timestamp.now(),
+  });
+
+  // Seed an empty placeholder doc in 'calendar' to establish
+  // the subcollection schema
+  await userRef.collection("calendar").doc("_schema").set({
+    dateTime: Timestamp.now(), // DateTime of the event
+    title: "",
+    notes: "",
+    // add other event fields here as needed
+    _placeholder: true,
+  });
+
+  // Seed an empty placeholder doc in 'medications' to establish
+  // the subcollection schema
+  await userRef.collection("medications").doc("_schema").set({
+    rxMetadata: {
+      medicationName: "",
+      dosage: "",
+      frequency: "",
+      prescribingDoctor: "",
+      pharmacy: "",
+      refillsRemaining: 0,
+    },
+    analyticalMetadata: {
+      adherenceRate: 0,
+      missedDoses: 0,
+      sideEffectsReported: [],
+      notes: "",
+    },
+    prescriptionStart: Timestamp.now(),
+    prescriptionEnd: Timestamp.now(),
+    _placeholder: true,
+  });
+
+  console.log(`User document created for uid: ${uid}`);
 });
