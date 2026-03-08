@@ -19,14 +19,18 @@ export default function BottomTabs() {
             headerShown: false,
             tabBarIcon: ({ focused }) => (
               <View style={styles.tabBarItemContainer}>
-                <Image
-                  resizeMode="contain"
-                  source={item.icon}
-                  style={[
-                    styles.tabBarIcon,
-                    focused && styles.tabBarIconFocused,
-                  ]}
-                />
+                {item.iconComponent ? (
+                  item.iconComponent(focused)
+                ) : (
+                  <Image
+                    resizeMode="contain"
+                    source={item.icon}
+                    style={[
+                      styles.tabBarIcon,
+                      focused ? styles.tabBarIconFocused : styles.tabBarIconUnfocused,
+                    ]}
+                  />
+                )}
               </View>
             ),
             tabBarLabel: ({ focused }) => (
@@ -61,5 +65,8 @@ const styles = StyleSheet.create({
   },
   tabBarIconFocused: {
     tintColor: colors.primary,
+  },
+  tabBarIconUnfocused: {
+    tintColor: colors.gray,
   },
 });

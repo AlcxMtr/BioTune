@@ -1,40 +1,34 @@
-import HomeScreen from '../home/HomeViewContainer';
 import CalendarScreen from '../calendar/CalendarViewContainer';
-import GridsScreen from '../grids/GridsViewContainer';
-import PagesScreen from '../pages/PagesViewContainer';
-import ComponentsScreen from '../components/ComponentsViewContainer';
+import MedicationScreen from '../medication/MedicationViewContainer';
+import SettingsScreen from '../settings/SettingsViewContainer';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import React from 'react';
 
-const iconHome = require('../../../assets/images/tabbar/home.png');
 const iconCalendar = require('../../../assets/images/tabbar/calendar.png');
-const iconGrids = require('../../../assets/images/tabbar/grids.png');
-const iconPages = require('../../../assets/images/tabbar/pages.png');
-const iconComponents = require('../../../assets/images/tabbar/components.png');
+const iconSettings = require('../../../assets/images/drawer/settings.png');
 
 const tabNavigationData = [
-  {
-    name: 'Home',
-    component: HomeScreen,
-    icon: iconHome,
-  },
   {
     name: 'Calendar',
     component: CalendarScreen,
     icon: iconCalendar,
   },
   {
-    name: 'Grids',
-    component: GridsScreen,
-    icon: iconGrids,
+    name: 'Medications',
+    component: MedicationScreen,
+    iconComponent: (focused) => (
+      <Icon
+        name="prescription-bottle-alt"
+        size={23}
+        color={focused ? '#555CC4' : '#5f5f5f'}
+        solid
+      />
+    ),
   },
   {
-    name: 'Pages',
-    component: PagesScreen,
-    icon: iconPages,
-  },
-  {
-    name: 'Components',
-    component: ComponentsScreen,
-    icon: iconComponents,
+    name: 'Settings',
+    component: SettingsScreen,
+    icon: iconSettings,
   },
 ];
 
