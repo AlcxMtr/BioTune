@@ -9,7 +9,7 @@ const Stack = createStackNavigator();
 
 export default function NavigatorView(props) {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       {StackNavigationData.map((item, idx) => (
         <Stack.Screen
           key={`stack_item-${idx+1}`}
