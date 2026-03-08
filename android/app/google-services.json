@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "942010346723",
+    "project_id": "biotune-b89e2",
+    "storage_bucket": "biotune-b89e2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:942010346723:android:4fb81829ab131defaf29d6",
+        "android_client_info": {
+          "package_name": "com.biotune.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFx9T_OtjMu7BpUpHNiRq8vcuAnEOZXFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

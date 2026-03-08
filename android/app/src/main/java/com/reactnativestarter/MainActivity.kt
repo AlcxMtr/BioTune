@@ -1,4 +1,4 @@
-package com.reactnativestarter.upd
+package com.biotune.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

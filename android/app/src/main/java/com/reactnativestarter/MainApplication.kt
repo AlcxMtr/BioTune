@@ -1,6 +1,7 @@
-package com.reactnativestarter.upd
+package com.biotune.app
 
 import android.app.Application
+import com.biotune.app.BuildConfig
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost

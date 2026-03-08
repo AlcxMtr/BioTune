@@ -69,7 +69,7 @@ android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
-    namespace "com.reactnativestarter.upd"
+    namespace "com.biotune.app"
 
 //     compileOptions {
 //         sourceCompatibility JavaVersion.VERSION_1_8
@@ -90,7 +90,7 @@ android {
         }
     }
     defaultConfig {
-        applicationId "com.reactnativestarter.upd"
+        applicationId "com.biotune.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 6
@@ -110,7 +110,14 @@ android {
         }
     }
 }
+
+apply plugin: 'com.google.gms.google-services'
+
 dependencies {
+    // Import the Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:34.10.0')
+    // TODO: Add the dependencies for Firebase products you want to use
+
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation("com.facebook.react:flipper-integration")
