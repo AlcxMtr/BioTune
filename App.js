@@ -4,10 +4,17 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { PersistGate } from 'redux-persist/integration/react';
 import { colors } from './src/styles';
 import { NavigationContainer } from '@react-navigation/native';
+import { LogBox } from 'react-native';
 
 import { store, persistor } from './src/redux/store';
 
 import AppView from './src/modules/AppViewContainer';
+
+LogBox.ignoreLogs([
+  'ViewPropTypes will be removed from React Native',
+  'React.createFactory() is deprecated',
+  '`new NativeEventEmitter()` was called with a non-null argument',
+]);
 
 export default function App() {
   return (

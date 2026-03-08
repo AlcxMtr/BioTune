@@ -30,7 +30,7 @@ export default function HomeScreen({ isExtended, setIsExtended }) {
       >
         <View style={styles.section}>
           <Text size={20} white>
-            Home
+            Not Home At All
           </Text>
         </View>
         <View style={styles.section}>
