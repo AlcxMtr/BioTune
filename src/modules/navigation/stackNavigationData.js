@@ -66,7 +66,7 @@ const headerBackground = require('../../../assets/images/topBarBg.png');
 
 const StackNavigationData = [
   {
-    name: 'React Native Starter',
+    name: 'BioTune',
     component: TabNavigator,
     headerLeft: null,
     headerBackground: { source: headerBackground },
