@@ -4,13 +4,13 @@ import { signOut, getAuth } from '@react-native-firebase/auth';
 import { setLoggedOut } from '../AppState';
 import SettingsView from './SettingsView';
 
-function SettingsContainer({ onSignOut }) {
+function SettingsContainer({ navigation, onSignOut }) {
   const handleSignOut = async () => {
     await signOut(getAuth());
     onSignOut();
   };
 
-  return <SettingsView onSignOut={handleSignOut} />;
+  return <SettingsView navigation={navigation} onSignOut={handleSignOut} />;
 }
 
 const mapDispatchToProps = (dispatch) => ({

@@ -3,6 +3,7 @@ import { TouchableOpacity, Image } from 'react-native';
 
 import TabNavigator from './MainTabNavigator';
 import ScanMedicationScreen from '../medication/ScanViewContainer';
+import LinkCaregiverScreen from '../settings/LinkCaregiverViewContainer';
 import ProfileScreen from '../profile/ProfileViewContainer';
 import GalleryScreen from '../gallery/GalleryViewContainer';
 import ArticleScreen from '../article/ArticleViewContainer';
@@ -101,6 +102,17 @@ const StackNavigationData = [
   {
     name: 'Profile',
     component: ProfileScreen,
+    headerLeft: headerLeftComponent,
+    headerBackground: { source: headerBackground },
+    headerTitleStyle: {
+      fontFamily: fonts.primaryRegular,
+      color: colors.white,
+      fontSize: 18,
+    },
+  },
+  {
+    name: 'Link Caregiver',
+    component: LinkCaregiverScreen,
     headerLeft: headerLeftComponent,
     headerBackground: { source: headerBackground },
     headerTitleStyle: {

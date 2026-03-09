@@ -16,10 +16,12 @@ const settingsItems = [
   { label: 'Delete Account' },
 ];
 
-export default function SettingsView({ onSignOut }) {
+export default function SettingsView({ navigation, onSignOut }) {
   const handlePress = (label) => {
     if (label === 'Sign Out') {
       onSignOut();
+    } else if (label === 'Link Caregiver') {
+      navigation.navigate('Link Caregiver');
     }
   };
 
