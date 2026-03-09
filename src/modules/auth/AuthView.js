@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { fonts, colors } from '../../styles';
 import { TextInput, Button } from '../../components';
