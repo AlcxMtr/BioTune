@@ -1,4 +1,3 @@
-````md
 # 🚀 React Native Starter – A Free Mobile App Template
 
 ## BioTune
