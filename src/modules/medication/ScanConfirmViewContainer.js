@@ -1,7 +1,13 @@
 import React from 'react';
 import { Alert } from 'react-native';
 import { getAuth } from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  doc,
+  addDoc,
+  Timestamp,
+} from '@react-native-firebase/firestore';
 import ScanConfirmView from './ScanConfirmView';
 
 export default function ScanConfirmViewContainer({ route, navigation }) {
@@ -10,27 +16,32 @@ export default function ScanConfirmViewContainer({ route, navigation }) {
     if (!uid) return;
 
     try {
-      const now = firestore.Timestamp.now();
+      const db = getFirestore();
+      const now = Timestamp.now();
       const medicationName = route?.params?.parsed?.medicationName ?? '';
 
       // Create the medication document
-      const medRef = await firestore()
-        .collection('users')
-        .doc(uid)
-        .collection('medications')
-        .add({
-          medicationName,
-          dosage,
-          instructions,
-          timeOfDay,
-          startDate: now,
-          endDate: null,
-        });
+      const medsCol = collection(db, 'users', uid, 'medications');
+      const medRef = await addDoc(medsCol, {
+        medicationName,
+        dosage,
+        instructions,
+        timeOfDay,
+        startDate: now,
+        endDate: null,
+      });
 
       // Record first dosage history entry
-      await medRef.collection('dosage').add({ date: now, dosage });
+      await addDoc(collection(db, 'users', uid, 'medications', medRef.id, 'dosage'), {
+        date: now,
+        dosage,
+      });
 
-      navigation.goBack();
+      // Navigate back to the Medications tab.
+      // ScanConfirmMedication and ScanMedication are stack-level siblings of
+      // the 'BioTune' tab navigator, so we must target the tab via its stack
+      // route name rather than getParent().
+      navigation.navigate('BioTune', { screen: 'Medications' });
     } catch (e) {
       Alert.alert('Error', 'Could not save medication. Please try again.');
     }

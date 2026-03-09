@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { getAuth } from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  onSnapshot,
+  Timestamp,
+} from '@react-native-firebase/firestore';
 import MedicationView from './MedicationView';
 
 export default function MedicationViewContainer({ navigation }) {
@@ -15,24 +23,24 @@ export default function MedicationViewContainer({ navigation }) {
       return;
     }
 
-    const unsubscribe = firestore()
-      .collection('users')
-      .doc(uid)
-      .collection('medications')
-      .onSnapshot(
-        snapshot => {
-          // Only show active medications (endDate === null)
-          const meds = snapshot.docs
-            .filter(doc => {
-              const d = doc.data();
-              return !d._placeholder && d.endDate === null;
-            })
-            .map(doc => ({ id: doc.id, ...doc.data() }));
-          setMedications(meds);
-          setLoading(false);
-        },
-        () => setLoading(false),
-      );
+    const db = getFirestore();
+    const medsCol = collection(db, 'users', uid, 'medications');
+
+    const unsubscribe = onSnapshot(
+      medsCol,
+      snapshot => {
+        // Only show active medications (endDate === null)
+        const meds = snapshot.docs
+          .filter(d => {
+            const data = d.data();
+            return !data._placeholder && data.endDate === null;
+          })
+          .map(d => ({ id: d.id, ...d.data() }));
+        setMedications(meds);
+        setLoading(false);
+      },
+      () => setLoading(false),
+    );
 
     return unsubscribe;
   }, []);
@@ -42,12 +50,10 @@ export default function MedicationViewContainer({ navigation }) {
     const uid = getAuth().currentUser?.uid;
     if (!uid) return;
     try {
-      await firestore()
-        .collection('users')
-        .doc(uid)
-        .collection('medications')
-        .doc(medicationId)
-        .update({ endDate: firestore.Timestamp.now() });
+      const db = getFirestore();
+      await updateDoc(doc(db, 'users', uid, 'medications', medicationId), {
+        endDate: Timestamp.now(),
+      });
     } catch {
       Alert.alert('Error', 'Could not remove medication. Please try again.');
     }
@@ -58,14 +64,13 @@ export default function MedicationViewContainer({ navigation }) {
     const uid = getAuth().currentUser?.uid;
     if (!uid) return;
     try {
-      const now = firestore.Timestamp.now();
-      const medRef = firestore()
-        .collection('users')
-        .doc(uid)
-        .collection('medications')
-        .doc(medicationId);
-      await medRef.update({ dosage: newDosage });
-      await medRef.collection('dosage').add({ date: now, dosage: newDosage });
+      const db = getFirestore();
+      const medRef = doc(db, 'users', uid, 'medications', medicationId);
+      await updateDoc(medRef, { dosage: newDosage });
+      await addDoc(collection(db, 'users', uid, 'medications', medicationId, 'dosage'), {
+        date: Timestamp.now(),
+        dosage: newDosage,
+      });
     } catch {
       Alert.alert('Error', 'Could not update dosage. Please try again.');
     }

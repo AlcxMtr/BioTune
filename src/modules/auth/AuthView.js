@@ -19,7 +19,7 @@ import { TextInput, Button } from '../../components';
 const { width } = Dimensions.get('window');
 const ROLES = ['Patient', 'Caregiver', 'Doctor'];
 
-export default function AuthView({ onLogin, onSetAccountType }) {
+export default function AuthView({ onSetAccountType, onAuthSuccess }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const [formState, setFormState] = useState('login');
   const [email, setEmail] = useState('');
@@ -53,12 +53,13 @@ export default function AuthView({ onLogin, onSetAccountType }) {
     setLoading(true);
     try {
       const auth = getAuth();
+      let credential;
       if (formState === 'login') {
-        await signInWithEmailAndPassword(auth, email, password);
+        credential = await signInWithEmailAndPassword(auth, email, password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        credential = await createUserWithEmailAndPassword(auth, email, password);
       }
-      onLogin();
+      onAuthSuccess(credential.user);
     } catch (e) {
       setError(e.message);
     } finally {

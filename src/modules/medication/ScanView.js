@@ -8,6 +8,7 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -80,6 +81,7 @@ function toScreenPos(cx, cy, imgW, imgH) {
 export default function ScanView({ navigation }) {
   const device = useCameraDevice('back');
   const { hasPermission, requestPermission } = useCameraPermission();
+  const isFocused = useIsFocused();
   const cameraRef = useRef(null);
   const isProcessing = useRef(false);
   const cameraReady = useRef(false);
@@ -95,7 +97,11 @@ export default function ScanView({ navigation }) {
   }, [hasPermission]);
 
   useEffect(() => {
-    if (!hasPermission || !device) return;
+    // Pause scanning while another screen (e.g. ScanConfirmView) is stacked
+    // on top. Without this guard the interval keeps running, accumulated items
+    // decay because the label is no longer in frame, and the list appears
+    // empty when the user presses back.
+    if (!hasPermission || !device || !isFocused) return;
 
     const interval = setInterval(async () => {
       if (isProcessing.current || !cameraRef.current || !cameraReady.current) return;
@@ -132,7 +138,7 @@ export default function ScanView({ navigation }) {
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [hasPermission, device]);
+  }, [hasPermission, device, isFocused]);
 
   const handleClear = useCallback(() => {
     accumulatedRef.current = [];
@@ -180,7 +186,7 @@ export default function ScanView({ navigation }) {
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={true}
+        isActive={isFocused}
         photo={true}
         resizeMode="cover"
         onInitialized={() => { cameraReady.current = true; }}
