@@ -8,10 +8,12 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { colors, fonts } from '../../styles';
+import { parseOntarioRxLabel, DRUG_NAME_THRESHOLD } from './parseRxLabel';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -79,9 +81,12 @@ function toScreenPos(cx, cy, imgW, imgH) {
 export default function ScanView({ navigation }) {
   const device = useCameraDevice('back');
   const { hasPermission, requestPermission } = useCameraPermission();
+  const isFocused = useIsFocused();
   const cameraRef = useRef(null);
   const isProcessing = useRef(false);
+  const cameraReady = useRef(false);
   const accumulatedRef = useRef([]);
+  const hasNavigated = useRef(false);
   const [displayItems, setDisplayItems] = useState([]);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState(null);
@@ -92,21 +97,27 @@ export default function ScanView({ navigation }) {
   }, [hasPermission]);
 
   useEffect(() => {
-    if (!hasPermission || !device) return;
+    // Pause scanning while another screen (e.g. ScanConfirmView) is stacked
+    // on top. Without this guard the interval keeps running, accumulated items
+    // decay because the label is no longer in frame, and the list appears
+    // empty when the user presses back.
+    if (!hasPermission || !device || !isFocused) return;
 
     const interval = setInterval(async () => {
-      if (isProcessing.current || !cameraRef.current) return;
+      if (isProcessing.current || !cameraRef.current || !cameraReady.current) return;
       isProcessing.current = true;
       setScanning(true);
       try {
-        const photo = await cameraRef.current.takePhoto({ qualityPrioritization: 'speed' });
-        const rawPath = photo.path;
-        const imagePath = rawPath.startsWith('file://') ? rawPath : `file://${rawPath}`;
-
-        // ML Kit bounding boxes are in "corrected" orientation space,
-        // so swap w/h when the sensor captures in landscape on a portrait device
-        const rotated =
-          photo.orientation === 'landscape-left' || photo.orientation === 'landscape-right';
+        // qualityPrioritization:'speed' enables ZSL on Android (reads from
+        // the rolling preview buffer ring — no hardware shutter, no AE/AF cycle)
+        const photo = await cameraRef.current.takePhoto({
+          qualityPrioritization: 'speed',
+          flash: 'off',
+          enableShutterSound: false,
+          enablePrecapture: false,
+        });
+        const imagePath = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
+        const rotated = photo.orientation === 'landscape-left' || photo.orientation === 'landscape-right';
         const imgW = rotated ? photo.height : photo.width;
         const imgH = rotated ? photo.width : photo.height;
         setImgDims({ w: imgW, h: imgH });
@@ -127,13 +138,28 @@ export default function ScanView({ navigation }) {
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [hasPermission, device]);
+  }, [hasPermission, device, isFocused]);
 
   const handleClear = useCallback(() => {
     accumulatedRef.current = [];
     setDisplayItems([]);
     setError(null);
+    hasNavigated.current = false;
   }, []);
+
+  // Auto-navigate to the confirmation screen once the drug name accumulates
+  // enough confidence. Instructions are passed through as-is at that moment.
+  useEffect(() => {
+    if (hasNavigated.current || displayItems.length === 0) return;
+    const sorted = displayItems
+      .slice()
+      .sort((a, b) => (a.cy !== b.cy ? a.cy - b.cy : a.cx - b.cx));
+    const parsed = parseOntarioRxLabel(sorted);
+    if (parsed.drugNameHits >= DRUG_NAME_THRESHOLD) {
+      hasNavigated.current = true;
+      navigation.navigate('ScanConfirmMedication', { parsed });
+    }
+  }, [displayItems, navigation]);
 
   if (!hasPermission) {
     return (
@@ -160,9 +186,11 @@ export default function ScanView({ navigation }) {
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={true}
+        isActive={isFocused}
         photo={true}
         resizeMode="cover"
+        onInitialized={() => { cameraReady.current = true; }}
+        onError={e => setError(e.message)}
       />
 
       {/* Positional text labels pinned over the camera feed */}

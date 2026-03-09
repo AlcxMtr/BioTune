@@ -1,61 +1,79 @@
-const ITEMS_LOADED = 'CalendarState/ITEMS_LOADED';
+// --- ACTIONS ---
+const SYMPTOMS_LOADING = 'CalendarState/SYMPTOMS_LOADING';
+const SYMPTOMS_LOADED = 'CalendarState/SYMPTOMS_LOADED';
 
-function itemsLoaded(items) {
+function symptomsLoading() {
+  return { type: SYMPTOMS_LOADING };
+}
+
+function symptomsLoaded(date, symptoms) {
   return {
-    type: ITEMS_LOADED,
-    items,
+    type: SYMPTOMS_LOADED,
+    payload: { date, symptoms },
   };
 }
 
-const names = ['Max', 'Philip', 'Alex', 'Irina', 'Vovan'];
-const randomNumber = (min, max) =>
-  Math.floor(Math.random() * (max - min + 1) + min);
-const labels = ['Urgent', 'Interview'];
+// --- THUNK (Async Action) ---
+// This is where you will call Firestore!
+export function loadSymptoms(date, userId = 'mockUserId') {
+  return async (dispatch, getState) => {
+    // Optional Optimization: Check if we already have symptoms for this date in Redux to save Firestore reads
+    // const existingSymptoms = getState().calendar.symptomsByDate[date];
+    // if (existingSymptoms) return;
 
-export function loadItems(day) {
-  // Do items loading here
-  return (dispatch, getState) => {
-    if (getState().calendar.items.length > 0) return;
+    dispatch(symptomsLoading());
 
-    const items = {};
+    try {
+      // TODO: ACTUAL FIRESTORE INTEGRATION HERE
+      // const snapshot = await db.collection('users').doc(userId).collection('calendar').where('date', '==', date).get();
+      // const fetchedSymptoms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    for (let i = -15; i < 85; i += 1) {
-      const time = day.timestamp + i * 24 * 60 * 60 * 1000;
-      const strTime = new Date(time).toISOString().split('T')[0];
-      if (!items[strTime]) {
-        items[strTime] = [];
-        const numItems = randomNumber(0, 5);
-        for (let j = 0; j < numItems; j += 1) {
-          items[strTime].push({
-            name: `Meeting with ${names[randomNumber(0, 4)]}`,
-            time: `${randomNumber(0, 24)}:${randomNumber(0, 60)}`,
-            labels: randomNumber(0, 1) ? [labels[randomNumber(0, 1)]] : [],
-          });
-        }
+      // MOCK DATA (Until Firestore is hooked up):
+      // Simulating a network delay
+      await new Promise(resolve => setTimeout(resolve, 500)); 
+      
+      let fetchedSymptoms = [];
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (date === today) {
+        fetchedSymptoms = [
+          { id: '1', time: '10:00 AM', symptoms: [{ name: 'Nausea', strength: 4 }, { name: 'Anxiety', strength: 7 }] },
+          { id: '2', time: '4:30 PM', symptoms: [{ name: 'Headache', strength: 3 }] }
+        ];
       }
+
+      // Dispatch the fetched data to the reducer
+      dispatch(symptomsLoaded(date, fetchedSymptoms));
+    } catch (error) {
+      console.error("Error fetching symptoms from Firestore: ", error);
     }
-
-    const newItems = {};
-    Object.keys(items).forEach(key => {
-      newItems[key] = items[key];
-    });
-
-    dispatch(itemsLoaded(newItems));
   };
 }
 
+// --- REDUCER ---
 const defaultState = {
-  items: [],
+  // We store symptoms in an object where the key is the date (e.g., '2026-03-08': [...])
+  symptomsByDate: {}, 
   isLoading: false,
 };
 
 export default function CalendarStateReducer(state = defaultState, action) {
   switch (action.type) {
-    case ITEMS_LOADED:
-      return Object.assign({}, state, {
-        isLoading: true,
-        items: action.items,
-      });
+    case SYMPTOMS_LOADING:
+      return { 
+        ...state, 
+        isLoading: true 
+      };
+    case SYMPTOMS_LOADED:
+      return {
+        ...state,
+        isLoading: false,
+        symptomsByDate: {
+          ...state.symptomsByDate,
+          // Dynamically add/update the array of symptoms for the specific date
+          [action.payload.date]: action.payload.symptoms, 
+        },
+      };
     default:
       return state;
   }

@@ -1,105 +1,147 @@
-/* eslint-disable class-methods-use-this */
-import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import { Agenda } from 'react-native-calendars';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity } from 'react-native';
+// Import CalendarProvider and ExpandableCalendar
+import { CalendarProvider, ExpandableCalendar } from 'react-native-calendars';
 
-import { colors, fonts } from '../../styles';
+const colors = { whiteTwo: '#F5F5F5', primary: '#007AFF' }; // Mocked styles
 
-class CalendarScreen extends React.Component {
-  rowHasChanged(r1, r2) {
-    return r1.name !== r2.name;
-  }
+const CalendarScreen = ({ navigation, loadSymptoms, symptomsByDate = {} }) => {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  // const [dailySymptoms, setDailySymptoms] = useState([]);
 
-  renderEmptyDate() {
-    return (
-      <View style={styles.emptyDate}>
-        <Text>This is empty date!</Text>
-      </View>
-    );
-  }
+  useEffect(() => {
+    // Call the Redux action when the date changes
+    loadSymptoms(selectedDate);
+  }, [selectedDate]);
 
-  renderItem(item) {
-    const labels =
-      item.labels &&
-      item.labels.map(label => (
-        <View
-          key={`label-${label}`}
-          style={{
-            padding: 5,
-            backgroundColor:
-              label === 'Urgent' ? colors.primary : colors.secondary,
-            borderRadius: 3,
+  // To get the data for your FlatList:
+  const dailySymptoms = symptomsByDate[selectedDate] || [];
+
+  const renderSymptomEntry = ({ item }) => (
+    <View style={styles.entryCard}>
+      <Text style={styles.entryTime}>{item.time}</Text>
+      {item.symptoms.map((symp, index) => (
+        <Text key={index} style={styles.symptomText}>
+         {symp.name} (Strength: {symp.strength}/10)
+        </Text>
+      ))}
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* CalendarProvider acts as the context for the expandable calendar */}
+      <CalendarProvider
+        date={selectedDate}
+        onDateChanged={(date) => setSelectedDate(date)}
+        showTodayButton
+      >
+        {/* ExpandableCalendar replaces the standard Calendar */}
+        <ExpandableCalendar
+          markedDates={{
+            [selectedDate]: { selected: true, selectedColor: colors.primary }
           }}
+          theme={{
+            calendarBackground: '#ffffff',
+            selectedDayBackgroundColor: colors.primary,
+            todayTextColor: colors.primary,
+            arrowColor: colors.primary,
+          }}
+          // You can set initial position to 'week' or 'month'
+          initialPosition={'month'} 
+        />
+
+        {/* MIDDLE SECTION: SYMPTOM LIST */}
+        {/* Notice we changed flex: 5 to flex: 1 so it just fills available space */}
+        <View style={styles.listContainer}>
+          <Text style={styles.listHeader}>Symptoms for {selectedDate}</Text>
+          
+          {dailySymptoms.length === 0 ? (
+            <Text style={styles.emptyText}>No symptoms logged for this day.</Text>
+          ) : (
+            <FlatList
+              data={dailySymptoms}
+              keyExtractor={(item) => item.id}
+              renderItem={renderSymptomEntry}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            />
+          )}
+        </View>
+      </CalendarProvider>
+
+      {/* BOTTOM SECTION: ACTION BUTTON */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.logButton}
+          onPress={() => navigation.navigate('LogSymptomsScreen', { date: selectedDate })}
         >
-          <Text style={{ color: 'white' }}>{label}</Text>
-        </View>
-      ));
-
-    return (
-      <View style={styles.item}>
-        <View>
-          <Text
-            style={{
-              color: '#48506B',
-              fontFamily: fonts.primaryRegular,
-              marginBottom: 10,
-            }}
-          >
-            {item.name}
-          </Text>
-          <Text style={{ color: '#9B9B9B', fontFamily: fonts.primaryRegular }}>
-            {item.time}
-          </Text>
-        </View>
-
-        <View styleName="horizontal h-start">{labels}</View>
+          <Text style={styles.logButtonText}>Log Symptoms</Text>
+        </TouchableOpacity>
       </View>
-    );
-  }
-
-  render() {
-    const { items, loadItems } = this.props;
-
-    return (
-      <Agenda
-        items={items}
-        loadItemsForMonth={loadItems}
-        renderItem={this.renderItem}
-        renderEmptyDate={this.renderEmptyDate}
-        rowHasChanged={this.rowHasChanged}
-        theme={{
-          dotColor: colors.primaryLight,
-          selectedDayBackgroundColor: colors.primaryLight,
-          agendaDayTextColor: colors.primaryLight,
-          agendaDayNumColor: colors.primaryLight,
-          agendaTodayColor: '#4F44B6',
-          backgroundColor: '#F1F1F8',
-        }}
-      />
-    );
-  }
-}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.whiteTwo,
-    alignItems: 'center',
-    justifyContent: 'center',
+    // Added a small top padding to account for hiding the header
   },
-  item: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  listContainer: {
+    flex: 1, // Now it dynamically takes up remaining space below the calendar
+    padding: 20,
+  },
+  listHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#333',
+  },
+  entryCard: {
     backgroundColor: 'white',
-    borderRadius: 5,
-    padding: 10,
-    marginRight: 10,
-    marginTop: 10,
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  emptyDate: {
-    height: 15,
-    flex: 1,
-    paddingTop: 30,
+  entryTime: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  symptomText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 10,
+    marginTop: 2,
+  },
+  emptyText: {
+    color: '#888',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  buttonContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 30, // Extra padding for the bottom of the screen
+    paddingTop: 10,
+  },
+  logButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  logButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

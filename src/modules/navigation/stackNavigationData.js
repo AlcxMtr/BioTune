@@ -4,6 +4,7 @@ import { TouchableOpacity, Image } from 'react-native';
 import TabNavigator from './MainTabNavigator';
 import ScanMedicationScreen from '../medication/ScanViewContainer';
 import LinkCaregiverScreen from '../settings/LinkCaregiverViewContainer';
+import ScanConfirmMedicationScreen from '../medication/ScanConfirmViewContainer';
 import ProfileScreen from '../profile/ProfileViewContainer';
 import GalleryScreen from '../gallery/GalleryViewContainer';
 import ArticleScreen from '../article/ArticleViewContainer';
@@ -67,7 +68,7 @@ const headerBackground = require('../../../assets/images/topBarBg.png');
 
 const StackNavigationData = [
   {
-    name: 'React Native Starter',
+    name: 'BioTune',
     component: TabNavigator,
     headerLeft: null,
     headerBackground: { source: headerBackground },
@@ -476,6 +477,11 @@ const StackNavigationData = [
   {
     name: 'ScanMedication',
     component: ScanMedicationScreen,
+    headerShown: false,
+  },
+  {
+    name: 'ScanConfirmMedication',
+    component: ScanConfirmMedicationScreen,
     headerShown: false,
   },
 ]

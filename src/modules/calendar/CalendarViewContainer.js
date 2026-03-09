@@ -1,17 +1,20 @@
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 
-import { loadItems } from './CalendarState';
-
-import CalendarScreen from './CalendarView';
+import { loadSymptoms } from './CalendarState';
+// Make sure this path correctly points to your CalendarScreen file
+import CalendarScreen from './CalendarView'; 
 
 export default compose(
   connect(
     state => ({
-      items: state.calendar.items,
+      // Map Redux state to props
+      symptomsByDate: state.calendar.symptomsByDate,
+      isLoading: state.calendar.isLoading,
     }),
     {
-      loadItems,
+      // Map actions to props
+      loadSymptoms,
     },
   ),
 )(CalendarScreen);
