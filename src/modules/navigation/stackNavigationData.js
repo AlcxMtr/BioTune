@@ -32,12 +32,12 @@ import TopNavigationScreen from '../components/TopNavigationContainer'
 import SpinnerScreen from '../components/SpinnerContainer'
 import TooltipScreen from '../components/TooltipContainer'
 import BadgesScreen from '../components/BadgesContainer'
-import RangeCalendarScreen from '../components/RangeCalendarContainer'
 import MenuScreen from '../components/MenuContainer'
 import OverflowMenuScreen from '../components/OverflowMenuContainer'
 import LayoutScreen from '../components/LayoutContainer'
 import PopoverScreen from '../components/PopoverContainer'
 import IconScreen from '../components/IconContainer'
+import LogSymptomsScreen from '../logSymptoms/LogSymptomsView'
 
 
 
@@ -75,6 +75,10 @@ const StackNavigationData = [
       color: colors.white,
       fontSize: 18,
     },
+  },
+  {
+    name: 'LogSymptomsScreen',
+    component: LogSymptomsScreen,
   },
   {
     name: 'Charts',
@@ -387,17 +391,6 @@ const StackNavigationData = [
   {
     name: 'Badges',
     component: BadgesScreen,
-    headerLeft: headerLeftComponent,
-    headerBackground: { source: headerBackground },
-    headerTitleStyle: {
-      fontFamily: fonts.primaryRegular,
-      color: colors.white,
-      fontSize: 18,
-    },
-  },
-  {
-    name: 'Range Calendar',
-    component: RangeCalendarScreen,
     headerLeft: headerLeftComponent,
     headerBackground: { source: headerBackground },
     headerTitleStyle: {

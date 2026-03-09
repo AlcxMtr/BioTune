@@ -2,7 +2,6 @@ import { connect } from 'react-redux';
 import { compose } from 'recompose';
 
 import { loadSymptoms } from './CalendarState';
-// Make sure this path correctly points to your CalendarScreen file
 import CalendarScreen from './CalendarView'; 
 
 export default compose(
