@@ -1,3 +1,6 @@
+import firestore from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
+
 // --- ACTIONS ---
 const SYMPTOMS_LOADING = 'CalendarState/SYMPTOMS_LOADING';
 const SYMPTOMS_LOADED = 'CalendarState/SYMPTOMS_LOADED';
@@ -14,45 +17,62 @@ function symptomsLoaded(date, symptoms) {
 }
 
 // --- THUNK (Async Action) ---
-// This is where you will call Firestore!
-export function loadSymptoms(date, userId = 'mockUserId') {
-  return async (dispatch, getState) => {
-    // Optional Optimization: Check if we already have symptoms for this date in Redux to save Firestore reads
-    // const existingSymptoms = getState().calendar.symptomsByDate[date];
-    // if (existingSymptoms) return;
-
+export function loadSymptoms(date) {
+  return async (dispatch) => {
     dispatch(symptomsLoading());
 
+    const uid = getAuth().currentUser?.uid;
+    
+    // Safety check: if they aren't logged in, don't try to fetch
+    if (!uid) {
+      dispatch(symptomsLoaded(date, []));
+      return;
+    }
+
     try {
-      // TODO: ACTUAL FIRESTORE INTEGRATION HERE
-      // const snapshot = await db.collection('users').doc(userId).collection('calendar').where('date', '==', date).get();
-      // const fetchedSymptoms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const snapshot = await firestore()
+        .collection('users')
+        .doc(uid)
+        .collection('calendar')
+        .where('date', '==', date)
+        .get();
 
-      // MOCK DATA (Until Firestore is hooked up):
-      // Simulating a network delay
-      await new Promise(resolve => setTimeout(resolve, 500)); 
-      
-      let fetchedSymptoms = [];
-      const today = new Date().toISOString().split('T')[0];
-      
-      if (date === today) {
-        fetchedSymptoms = [
-          { id: '1', time: '10:00 AM', symptoms: [{ name: 'Nausea', strength: 4 }, { name: 'Anxiety', strength: 7 }] },
-          { id: '2', time: '4:30 PM', symptoms: [{ name: 'Headache', strength: 3 }] }
-        ];
-      }
+      const fetchedSymptoms = snapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        // Convert the ISO dateTime string into a readable time (e.g., "4:30 PM")
+        const dateObj = new Date(data.dateTime);
+        let hours = dateObj.getHours();
+        const minutes = dateObj.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // The hour '0' should be '12'
+        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+        const formattedTime = `${hours}:${minutesStr} ${ampm}`;
 
-      // Dispatch the fetched data to the reducer
+        return {
+          id: doc.id,
+          time: formattedTime,
+          rawDate: dateObj, // Keep this around so we can sort the entries
+          symptoms: data.symptoms || [],
+        };
+      });
+
+      // Sort entries chronologically (oldest logs at the top, newest at the bottom)
+      fetchedSymptoms.sort((a, b) => a.rawDate - b.rawDate);
+
+      // Dispatch the mapped, sorted data to the reducer
       dispatch(symptomsLoaded(date, fetchedSymptoms));
+      
     } catch (error) {
       console.error("Error fetching symptoms from Firestore: ", error);
+      dispatch(symptomsLoaded(date, [])); // Don't leave the app loading forever if it fails
     }
   };
 }
 
 // --- REDUCER ---
 const defaultState = {
-  // We store symptoms in an object where the key is the date (e.g., '2026-03-08': [...])
   symptomsByDate: {}, 
   isLoading: false,
 };
@@ -70,7 +90,6 @@ export default function CalendarStateReducer(state = defaultState, action) {
         isLoading: false,
         symptomsByDate: {
           ...state.symptomsByDate,
-          // Dynamically add/update the array of symptoms for the specific date
           [action.payload.date]: action.payload.symptoms, 
         },
       };

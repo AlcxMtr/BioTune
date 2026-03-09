@@ -21,6 +21,7 @@
   "dependencies": {
     "@babel/helper-hoist-variables": "^7.24.7",
     "@exponent/react-native-action-sheet": "^0.3.0",
+    "@miblanchard/react-native-slider": "^2.6.0",
     "@react-native-async-storage/async-storage": "^1.18.2",
     "@react-native-community/checkbox": "^0.5.17",
     "@react-native-community/cli": "^11.4.1",
